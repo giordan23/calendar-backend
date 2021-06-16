@@ -45,22 +45,87 @@ const crearEvento = async (req, res = response) => {
     }
 }
 
-const actualizarEvento = (req, res = response) => {
+const actualizarEvento = async(req, res = response) => {
 
-    const eventoId = req.id;
-    console.log(eventoId);
+    const eventoId = req.params.id;
 
-    res.json({
-        ok: true,
-        msg: 'Actualizar evento'
-    })
+    try {
+        
+        const evento = await Event.findById(eventoId);
+
+        if (!evento) {
+            return res.status(404).json({
+                ok: false,
+                msg: 'El evento no fue encontrado'
+            })
+        }
+
+        if( evento.user.toString() !== req.uid ) {
+            return res.status(401).json({
+                ok: false,
+                msg: 'No tiene permiso de editar este evento'
+            })
+        }
+
+        const nuevoEvento = {
+            ...req.body,
+            user: req.uid
+        }
+
+        const eventoActualizado = await Event.findOneAndUpdate(eventoId, nuevoEvento, { new:true });
+
+        res.json( {
+            ok: true,
+            evento: eventoActualizado
+        });
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok: false,
+            msg: 'Por favor hable con el administrador Giordan -actE'
+        });
+    }
+
+ 
 }
 
-const eliminarEvento = (req, res = response) => {
-    res.json({
-        ok: true,
-        msg: 'Eliminar evento'
-    })
+const eliminarEvento = async (req, res = response) => {
+
+    const eventoId = req.params.id;
+
+    try {
+        
+        const evento = await Event.findById(eventoId);
+
+        if (!evento) {
+            return res.status(404).json({
+                ok: false,
+                msg: 'El evento no fue encontrado'
+            })
+        }
+
+        if( evento.user.toString() !== req.uid ) {
+            return res.status(401).json({
+                ok: false,
+                msg: 'No tiene permiso de eliminar este evento'
+            })
+        }
+
+        const eventoEliminado = await Event.findByIdAndRemove(eventoId);
+
+        res.json( {
+            ok: true,
+            evento: eventoEliminado
+        });
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok: false,
+            msg: 'Por favor hable con el administrador Giordan -DelEv'
+        });
+    }
 }
 
 module.exports = {
